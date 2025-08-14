@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VA Client Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a; /* Dark background */
+            color: #e0e0e0; /* Light gray text */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem; /* Increased padding */
+        }
+        .card {
+            background-color: #222222; /* Slightly lighter dark for cards */
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4); /* Deeper shadow */
+            padding: 2rem; /* Increased padding */
+            margin-bottom: 2rem; /* Increased margin */
+            border: 1px solid #333333; /* Subtle border */
+        }
+        .btn-primary {
+            background-color: #FFD700; /* Vibrant Gold */
+            color: #1a1a1a; /* Dark text on gold */
+            padding: 0.85rem 1.75rem; /* Larger padding */
+            border-radius: 8px;
+            font-weight: 700; /* Bolder text */
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .btn-primary:hover {
+            background-color: #e6c200; /* Slightly darker gold on hover */
+            transform: translateY(-2px);
+        }
+        .input-field {
+            border: 1px solid #555555; /* Darker gray border */
+            background-color: #333333; /* Darker background for inputs */
+            color: #e0e0e0; /* Light text */
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem; /* More padding */
+            width: 100%;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .input-field:focus {
+            border-color: #FFD700; /* Vibrant Gold focus */
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.4); /* Gold glow */
+        }
+        .table-header {
+            background-color: #333333; /* Dark header background */
+            color: #FFD700; /* Gold text */
+            font-weight: 700;
+            text-align: left;
+            padding: 1rem 1.25rem; /* More padding */
+            border-bottom: 2px solid #555555; /* Darker border */
+            text-transform: uppercase; /* Uppercase headers */
+            letter-spacing: 0.05em;
+        }
+        .table-row {
+            border-bottom: 1px solid #444444; /* Dark gray row divider */
+        }
+        .table-row:nth-child(even) {
+            background-color: #2b2b2b; /* Slightly different shade for even rows */
+        }
+        .table-cell {
+            padding: 1rem 1.25rem; /* More padding */
+            vertical-align: middle; /* Align content vertically */
+            color: #f0f0f0; /* Light text */
+        }
+        /* Base styles for status select */
+        .status-select {
+            border: 1px solid #555555;
+            background-color: #333333;
+            color: #f0f0f0;
+            border-radius: 6px;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            -webkit-appearance: none; /* Remove default arrow on WebKit browsers */
+            -moz-appearance: none; /* Remove default arrow on Firefox */
+            appearance: none; /* Remove default arrow */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+        }
+        .status-select:focus {
+            border-color: #FFD700;
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Specific colors for status options */
+        .status-Active {
+            background-color: #28a745; /* Success Green */
+            color: white;
+            border-color: #28a745;
+        }
+        .status-Pending {
+            background-color: #007bff; /* Primary Blue */
+            color: white;
+            border-color: #007bff;
+        }
+        .status-NotActive {
+            background-color: #ffc107; /* Warning Orange */
+            color: #1a1a1a; /* Dark text for contrast */
+            border-color: #ffc107;
+        }
+        .status-NotInterested {
+            background-color: #dc3545; /* Danger Red */
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .delete-btn {
+            background-color: #cc2222; /* Stronger red for delete */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .delete-btn:hover {
+            background-color: #a01c1c; /* Darker red on hover */
+            transform: translateY(-1px);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            border-left-color: #FFD700; /* Gold spinner */
+            border-radius: 50%;
+            width: 28px; /* Slightly larger */
+            height: 28px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .message-box {
+            position: fixed;
+            top: 30px; /* Adjusted position */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #28a745; /* Success Green */
+            color: white;
+            padding: 1rem 2rem; /* Larger padding */
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            font-weight: 600;
+        }
+        .message-box.error {
+            background-color: #dc3545; /* Error Red */
+        }
+        .message-box.show {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .table-cell {
+                padding: 0.75rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            .table-header {
+                padding: 0.75rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container py-8">
+        <h1 class="text-4xl font-extrabold text-center text-white mb-10">
+            VA Client Management Hub
+        </h1>
+
+        <!-- User ID Display -->
+        <div class="card flex flex-col sm:flex-row justify-between items-center bg-gray-800 border border-gray-700 p-5 mb-8">
+            <p class="text-gray-300 text-base font-medium mb-2 sm:mb-0">Welcome, <span id="userIdDisplay" class="font-bold text-gold-400">Mico Jay Fernandez</span></p>
+            <div id="authStatus" class="text-gray-300 text-base font-medium">Authenticating...</div>
+        </div>
+
+        <!-- Add New Client Form -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gold-400 mb-8">Add New Client</h2>
+            <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="fullName" class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                    <input type="text" id="fullName" class="input-field" placeholder="Client's Full Name" required>
+                </div>
+                <div>
+                    <label for="companyName" class="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
+                    <input type="text" id="companyName" class="input-field" placeholder="Company Name" required>
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input type="email" id="email" class="input-field" placeholder="client@example.com" required>
+                </div>
+                <div>
+                    <label for="phoneNumber" class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                    <input type="tel" id="phoneNumber" class="input-field" placeholder="(123) 456-7890">
+                </div>
+                <div>
+                    <label for="website" class="block text-sm font-medium text-gray-300 mb-2">Website URL</label>
+                    <input type="url" id="website" class="input-field" placeholder="https://www.client.com">
+                </div>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                    <select id="status" class="input-field status-select" required>
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Not Active">Not Active</option>
+                        <option value="Not Interested">Not Interested</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="clientType" class="block text-sm font-medium text-gray-300 mb-2">Client Type</label>
+                    <select id="clientType" class="input-field status-select" required>
+                        <option value="Project Based">Project Based</option>
+                        <option value="Hourly Rate">Hourly Rate</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label for="priceSalary" class="block text-sm font-medium text-gray-300 mb-2">Price / Salary</label>
+                    <input type="text" id="priceSalary" class="input-field" placeholder="$X.XX/hr or $X,XXX/month" required>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3 flex justify-end mt-4">
+                    <button type="submit" class="btn-primary flex items-center justify-center" id="addClientButton">
+                        <span id="buttonText">Add Client</span>
+                        <div id="loadingSpinner" class="spinner ml-3 hidden"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Client List Table -->
+        <div class="card overflow-x-auto">
+            <h2 class="text-2xl font-bold text-gold-400 mb-8">My Clients</h2>
+            <div id="clientListStatus" class="text-center text-gray-400 mb-6 hidden">
+                Loading clients... <div class="spinner mx-auto mt-4"></div>
+            </div>
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead>
+                    <tr>
+                        <th class="table-header">Full Name</th>
+                        <th class="table-header">Company Name</th>
+                        <th class="table-header">Email</th>
+                        <th class="table-header">Phone Number</th>
+                        <th class="table-header">Website</th>
+                        <th class="table-header">Status</th>
+                        <th class="table-header">Client Type</th>
+                        <th class="table-header">Price / Salary</th>
+                        <th class="table-header">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientTableBody" class="bg-gray-800 divide-y divide-gray-700">
+                    <!-- Client rows will be dynamically inserted here -->
+                </tbody>
+            </table>
+            <p id="noClientsMessage" class="text-center text-gray-500 mt-6 hidden">No clients added yet. Add your first client above!</p>
+        </div>
+
+        <!-- Earnings Log and Chart -->
+        <div class="card">
+            <h2 class="text-2xl font-bold text-gold-400 mb-8">Log & View Earnings</h2>
+            <form id="earningsForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="earningStartDate" class="block text-sm font-medium text-gray-300 mb-2">Period Start Date</label>
+                    <input type="date" id="earningStartDate" class="input-field" required>
+                </div>
+                <div>
+                    <label for="earningEndDate" class="block text-sm font-medium text-gray-300 mb-2">Period End Date</label>
+                    <input type="date" id="earningEndDate" class="input-field" required>
+                </div>
+                <div>
+                    <label for="earningAmount" class="block text-sm font-medium text-gray-300 mb-2">Amount Earned ($)</label>
+                    <input type="number" id="earningAmount" class="input-field" placeholder="e.g., 1500" step="0.01" min="0" required>
+                </div>
+                <div class="md:col-span-3 flex justify-end mt-4">
+                    <button type="submit" class="btn-primary flex items-center justify-center" id="addEarningButton">
+                        <span id="earningButtonText">Log Earnings</span>
+                        <div id="earningLoadingSpinner" class="spinner ml-3 hidden"></div>
+                    </button>
+                </div>
+            </form>
+            <div id="earningLogStatus" class="text-center text-gray-400 mt-4 hidden">
+                Loading earnings... <div class="spinner mx-auto mt-2"></div>
+            </div>
+            <div class="mt-8">
+                <h3 class="text-xl font-bold text-gray-200 mb-4">Earnings History</h3>
+                <div class="max-h-60 overflow-y-auto border border-gray-700 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="table-header py-2 px-4 sticky top-0">Period Start Date</th>
+                                <th class="table-header py-2 px-4 sticky top-0">Period End Date</th>
+                                <th class="table-header py-2 px-4 sticky top-0">Amount</th>
+                                <th class="table-header py-2 px-4 sticky top-0">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="earningsTableBody" class="bg-gray-800 divide-y divide-700">
+                            <!-- Earnings rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                    <p id="noEarningsMessage" class="text-center text-gray-500 py-4 hidden">No earnings logged yet.</p>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h3 class="text-xl font-bold text-gray-200 mb-4">Earnings Distribution</h3>
+                <div class="relative h-96 w-full">
+                    <canvas id="earningsChart"></canvas>
+                    <div id="chartNoDataMessage" class="absolute inset-0 flex items-center justify-center text-gray-500 hidden">
+                        No earnings data to display. Log some earnings above!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box for notifications -->
+    <div id="messageBox" class="message-box"></div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, limit, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+        // Global variables for Firebase config and app ID
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        let app;
+        let db;
+        let auth;
+        let currentUserId = null;
+        let authReady = false;
+        let earningsChartInstance = null; // To store the Chart.js instance
+
+        const clientForm = document.getElementById('clientForm');
+        const clientTableBody = document.getElementById('clientTableBody');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const authStatus = document.getElementById('authStatus');
+        const noClientsMessage = document.getElementById('noClientsMessage');
+        const addClientButton = document.getElementById('addClientButton');
+        const buttonText = document.getElementById('buttonText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const clientListStatus = document.getElementById('clientListStatus');
+        const messageBox = document.getElementById('messageBox');
+
+        // Earnings specific elements
+        const earningsForm = document.getElementById('earningsForm');
+        const earningStartDateInput = document.getElementById('earningStartDate');
+        const earningEndDateInput = document.getElementById('earningEndDate');
+        const earningAmountInput = document.getElementById('earningAmount');
+        const addEarningButton = document.getElementById('addEarningButton');
+        const earningButtonText = document.getElementById('earningButtonText');
+        const earningLoadingSpinner = document.getElementById('earningLoadingSpinner');
+        const earningsTableBody = document.getElementById('earningsTableBody');
+        const earningLogStatus = document.getElementById('earningLogStatus');
+        const noEarningsMessage = document.getElementById('noEarningsMessage');
+        const earningsChartCanvas = document.getElementById('earningsChart');
+        const chartNoDataMessage = document.getElementById('chartNoDataMessage');
+
+        // Set current date as default for earningStartDate and earningEndDate
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0'); // Add leading zero
+        const day = today.getDate().toString().padStart(2, '0'); // Add leading zero
+        earningStartDateInput.value = `${year}-${month}-${day}`;
+        earningEndDateInput.value = `${year}-${month}-${day}`;
+
+        /**
+         * Displays a temporary message box.
+         * @param {string} message The message to display.
+         * @param {boolean} isError True if it's an error message, false for success.
+         */
+        function showMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('error');
+            if (isError) {
+                messageBox.classList.add('error');
+            }
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
+
+        /**
+         * Initializes Firebase and sets up authentication.
+         */
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                authStatus.textContent = 'Authenticating...';
+                clientListStatus.classList.remove('hidden');
+                earningLogStatus.classList.remove('hidden');
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        // Display the user's name directly
+                        userIdDisplay.textContent = "Mico Jay Fernandez";
+                        authStatus.textContent = 'Authenticated!';
+                        authReady = true;
+                        // Fetch and display data once authenticated
+                        fetchClients();
+                        fetchMonthlyEarnings();
+                    } else {
+                        // Sign in anonymously if no user is found and no custom token is provided
+                        if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or authenticating:", error);
+                authStatus.textContent = 'Authentication Failed!';
+                showMessage(`Error: ${error.message}`, true);
+                clientListStatus.classList.add('hidden'); // Hide loading on error
+                earningLogStatus.classList.add('hidden');
+                noClientsMessage.textContent = 'Failed to load data. Please check your connection or try again later.';
+                noClientsMessage.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Fetches and displays client data from Firestore in real-time.
+         */
+        function fetchClients() {
+            if (!authReady || !currentUserId) {
+                console.warn("Authentication not ready or user ID not available. Cannot fetch clients.");
+                return;
+            }
+
+            const clientsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/vaClients`);
+            const q = query(clientsCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                clientTableBody.innerHTML = ''; // Clear existing rows
+                const clients = [];
+                snapshot.forEach((doc) => {
+                    clients.push({ id: doc.id, ...doc.data() });
+                });
+
+                if (clients.length === 0) {
+                    noClientsMessage.classList.remove('hidden');
+                } else {
+                    noClientsMessage.classList.add('hidden');
+                    clients.forEach(client => {
+                        addClientRowToTable(client);
+                    });
+                }
+                clientListStatus.classList.add('hidden'); // Hide loading after data is loaded
+            }, (error) => {
+                console.error("Error fetching clients:", error);
+                showMessage(`Error fetching clients: ${error.message}`, true);
+                clientListStatus.classList.add('hidden');
+                noClientsMessage.textContent = 'Failed to load client data.';
+                noClientsMessage.classList.remove('hidden');
+            });
+        }
+
+        /**
+         * Adds a new client entry to Firestore.
+         * @param {Object} clientData The client data object.
+         */
+        async function addClient(clientData) {
+            if (!authReady || !currentUserId) {
+                showMessage("Not authenticated. Please wait or refresh.", true);
+                return;
+            }
+
+            // Show loading state
+            buttonText.textContent = 'Adding...';
+            loadingSpinner.classList.remove('hidden');
+            addClientButton.disabled = true;
+
+            try {
+                const clientsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/vaClients`);
+                await addDoc(clientsCollectionRef, clientData);
+                clientForm.reset();
+                document.getElementById('status').value = 'Active'; // Reset status to default
+                document.getElementById('clientType').value = 'Project Based'; // Reset client type to default
+                showMessage("Client added successfully!");
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showMessage(`Failed to add client: ${e.message}`, true);
+            } finally {
+                // Hide loading state
+                buttonText.textContent = 'Add Client';
+                loadingSpinner.classList.add('hidden');
+                addClientButton.disabled = false;
+            }
+        }
+
+        /**
+         * Updates an existing client's data in Firestore.
+         * @param {string} clientId The ID of the client document.
+         * @param {Object} updates The fields to update.
+         */
+        async function updateClient(clientId, updates) {
+            if (!authReady || !currentUserId) {
+                showMessage("Not authenticated. Cannot update client.", true);
+                return;
+            }
+            try {
+                const clientDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/vaClients`, clientId);
+                await updateDoc(clientDocRef, updates);
+                showMessage("Client updated successfully!");
+            } catch (e) {
+                console.error("Error updating document: ", e);
+                showMessage(`Failed to update client: ${e.message}`, true);
+            }
+        }
+
+        /**
+         * Deletes a client entry from Firestore.
+         * @param {string} clientId The ID of the client document to delete.
+         */
+        async function deleteClient(clientId) {
+            if (!authReady || !currentUserId) {
+                showMessage("Not authenticated. Cannot delete client.", true);
+                return;
+            }
+            // Use a custom modal for confirmation instead of alert/confirm
+            const confirmDelete = await showConfirmationModal("Are you sure you want to delete this client?");
+            if (!confirmDelete) {
+                return;
+            }
+            try {
+                const clientDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/vaClients`, clientId);
+                await deleteDoc(clientDocRef);
+                showMessage("Client deleted successfully!");
+            } catch (e) {
+                console.error("Error deleting document: ", e);
+                showMessage(`Failed to delete client: ${e.message}`, true);
+            }
+        }
+
+        /**
+         * Dynamically adds a client row to the HTML table.
+         * @param {Object} client The client data object including its Firestore ID.
+         */
+        function addClientRowToTable(client) {
+            const row = clientTableBody.insertRow();
+            row.id = `client-row-${client.id}`;
+            row.classList.add('table-row');
+
+            // Determine status color class
+            const statusClass = `status-${client.status.replace(/\s/g, '')}`; // Remove spaces for class name
+
+            row.innerHTML = `
+                <td class="table-cell">${client.fullName}</td>
+                <td class="table-cell">${client.companyName}</td>
+                <td class="table-cell">${client.email}</td>
+                <td class="table-cell">
+                    <input type="tel" class="w-32 p-1 border rounded text-sm bg-gray-700 text-white border-gray-600 focus:border-gold-400" value="${client.phoneNumber || 'N/A'}" data-client-id="${client.id}" data-field="phoneNumber">
+                </td>
+                <td class="table-cell">
+                    ${client.website && client.website !== 'N/A' ? `<a href="${client.website}" target="_blank" class="text-gold-400 hover:underline">${client.website.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0]}</a>` : 'N/A'}
+                </td>
+                <td class="table-cell">
+                    <select class="status-select ${statusClass}" data-client-id="${client.id}" data-field="status">
+                        <option value="Active" ${client.status === 'Active' ? 'selected' : ''}>Active</option>
+                        <option value="Pending" ${client.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="Not Active" ${client.status === 'Not Active' ? 'selected' : ''}>Not Active</option>
+                        <option value="Not Interested" ${client.status === 'Not Interested' ? 'selected' : ''}>Not Interested</option>
+                    </select>
+                </td>
+                <td class="table-cell">
+                    <select class="status-select" data-client-id="${client.id}" data-field="clientType">
+                        <option value="Project Based" ${client.clientType === 'Project Based' ? 'selected' : ''}>Project Based</option>
+                        <option value="Hourly Rate" ${client.clientType === 'Hourly Rate' ? 'selected' : ''}>Hourly Rate</option>
+                    </select>
+                </td>
+                <td class="table-cell">
+                    <input type="text" class="w-32 p-1 border rounded text-sm bg-gray-700 text-white border-gray-600 focus:border-gold-400" value="${client.priceSalary}" data-client-id="${client.id}" data-field="priceSalary">
+                </td>
+                <td class="table-cell">
+                    <button class="delete-btn" data-client-id="${client.id}">Delete</button>
+                </td>
+            `;
+
+            // Add event listeners for selects and inputs
+            row.querySelectorAll('.status-select, input[type="text"], input[type="tel"]').forEach(element => {
+                element.addEventListener('change', (e) => {
+                    const clientId = e.target.dataset.clientId;
+                    const field = e.target.dataset.field;
+                    const newValue = e.target.value;
+                    updateClient(clientId, { [field]: newValue });
+
+                    // Update class based on new status
+                    if (field === 'status') {
+                        e.target.className = 'status-select'; // Reset existing classes
+                        e.target.classList.add(`status-${newValue.replace(/\s/g, '')}`);
+                    }
+                });
+            });
+
+            row.querySelector('.delete-btn').addEventListener('click', (e) => {
+                const clientId = e.target.dataset.clientId;
+                deleteClient(clientId);
+            });
+        }
+
+        // --- Monthly Earnings Logic ---
+
+        /**
+         * Adds a new earning entry to Firestore.
+         * @param {Object} earningData The earning data object (startDate, endDate, amount).
+         */
+        async function addMonthlyEarning(earningData) {
+            if (!authReady || !currentUserId) {
+                showMessage("Not authenticated. Please wait or refresh.", true);
+                return;
+            }
+
+            // Show loading state
+            earningButtonText.textContent = 'Logging...';
+            earningLoadingSpinner.classList.remove('hidden');
+            addEarningButton.disabled = true;
+
+            try {
+                const earningsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/monthlyEarnings`);
+                // Create a unique ID for the document based on start and end dates
+                const docId = `${earningData.startDate.toISOString().split('T')[0]}_${earningData.endDate.toISOString().split('T')[0]}`;
+                await setDoc(doc(earningsCollectionRef, docId), earningData);
+                earningsForm.reset();
+                earningAmountInput.value = ''; // Clear amount
+                // Reset date inputs to current date
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = (today.getMonth() + 1).toString().padStart(2, '0');
+                const day = today.getDate().toString().padStart(2, '0');
+                earningStartDateInput.value = `${year}-${month}-${day}`;
+                earningEndDateInput.value = `${year}-${month}-${day}`;
+                showMessage("Earnings logged successfully!");
+            } catch (e) {
+                console.error("Error adding earnings: ", e);
+                showMessage(`Failed to log earnings: ${e.message}`, true);
+            } finally {
+                // Hide loading state
+                earningButtonText.textContent = 'Log Earnings';
+                earningLoadingSpinner.classList.add('hidden');
+                addEarningButton.disabled = false;
+            }
+        }
+
+        /**
+         * Fetches and displays earnings data from Firestore in real-time.
+         */
+        function fetchMonthlyEarnings() {
+            if (!authReady || !currentUserId) {
+                console.warn("Authentication not ready or user ID not available. Cannot fetch earnings.");
+                return;
+            }
+
+            const earningsCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/monthlyEarnings`);
+            // Order by startDate for correct chart visualization
+            const q = query(earningsCollectionRef, orderBy("startDate", "asc"));
+
+            onSnapshot(q, (snapshot) => {
+                earningsTableBody.innerHTML = ''; // Clear existing rows
+                const earnings = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // Convert Firestore Timestamp to Date object
+                    if (data.startDate && typeof data.startDate.toDate === 'function') {
+                        data.startDate = data.startDate.toDate();
+                    }
+                    if (data.endDate && typeof data.endDate.toDate === 'function') {
+                        data.endDate = data.endDate.toDate();
+                    }
+                    earnings.push({ id: doc.id, ...data });
+                });
+
+                if (earnings.length === 0) {
+                    noEarningsMessage.classList.remove('hidden');
+                    chartNoDataMessage.classList.remove('hidden');
+                } else {
+                    noEarningsMessage.classList.add('hidden');
+                    chartNoDataMessage.classList.add('hidden');
+                    earnings.forEach(earning => {
+                        addEarningRowToTable(earning);
+                    });
+                }
+                earningLogStatus.classList.add('hidden'); // Hide loading after data is loaded
+                renderEarningsChart(earnings); // Render/update chart
+            }, (error) => {
+                console.error("Error fetching earnings:", error);
+                showMessage(`Error fetching earnings: ${error.message}`, true);
+                earningLogStatus.classList.add('hidden');
+                noEarningsMessage.textContent = 'Failed to load earnings data.';
+                noEarningsMessage.classList.remove('hidden');
+                chartNoDataMessage.classList.remove('hidden');
+            });
+        }
+
+        /**
+         * Dynamically adds an earning row to the HTML table.
+         * @param {Object} earning The earning data object.
+         */
+        function addEarningRowToTable(earning) {
+            const row = earningsTableBody.insertRow();
+            row.id = `earning-row-${earning.id}`;
+            row.classList.add('table-row');
+
+            // Format dates for display
+            const formattedStartDate = earning.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const formattedEndDate = earning.endDate ? earning.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+
+
+            row.innerHTML = `
+                <td class="table-cell">${formattedStartDate}</td>
+                <td class="table-cell">${formattedEndDate}</td>
+                <td class="table-cell">$${earning.amount.toFixed(2)}</td>
+                <td class="table-cell">
+                    <button class="delete-btn" data-earning-id="${earning.id}">Delete</button>
+                </td>
+            `;
+
+            row.querySelector('.delete-btn').addEventListener('click', async (e) => {
+                const earningId = e.target.dataset.earningId;
+                const confirmDelete = await showConfirmationModal("Are you sure you want to delete this earning entry?");
+                if (!confirmDelete) {
+                    return;
+                }
+                try {
+                    const earningDocRef = doc(db, `artifacts/${appId}/users/${currentUserId}/monthlyEarnings`, earningId);
+                    await deleteDoc(earningDocRef);
+                    showMessage("Earning entry deleted successfully!");
+                } catch (e) {
+                    console.error("Error deleting earning entry: ", e);
+                    showMessage(`Failed to delete earning entry: ${e.message}`, true);
+                }
+            });
+        }
+
+        /**
+         * Renders the earnings chart using Chart.js.
+         * @param {Array<Object>} earningsData Array of earning objects.
+         */
+        function renderEarningsChart(earningsData) {
+            // Sort data by startDate before rendering chart to ensure correct order
+            earningsData.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+            const labels = earningsData.map(e => {
+                const start = e.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const end = e.endDate ? e.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                return `${start} - ${end}`;
+            });
+            const amounts = earningsData.map(e => e.amount);
+
+            // Calculate total earnings for percentages
+            const totalEarnings = amounts.reduce((sum, current) => sum + current, 0);
+
+            // Generate colors for the pie chart
+            const pieChartColors = [
+                '#FFD700',      // Gold
+                '#B8860B',      // DarkGoldenrod
+                '#DAA520',      // Goldenrod
+                '#F0E68C',      // Khaki
+                '#ADD8E6',      // LightBlue
+                '#87CEEB',      // SkyBlue
+                '#6495ED',      // CornflowerBlue
+                '#4682B4',      // SteelBlue
+                '#5F9EA0',      // CadetBlue
+                '#20B2AA',      // LightSeaGreen
+                '#3CB371',      // MediumSeaGreen
+                '#6B8E23',      // OliveDrab
+                '#9ACD32',      // YellowGreen
+                '#ADFF2F',      // GreenYellow
+                '#7CFC00',      // LawnGreen
+                '#32CD32',      // LimeGreen
+                '#00FF7F',      // SpringGreen
+                '#00FA9A',      // MediumSpringGreen
+                '#40E0D0',      // Turquoise
+                '#AFEEEE',      // PaleTurquoise
+                '#B0E0E6',      // PowderBlue
+                '#87CEFA',      // LightSkyBlue
+                '#778899',      // LightSlateGray
+                '#708090',      // SlateGray
+                '#696969',      // DimGray
+                '#808080',      // Gray
+                '#A9A9A9',      // DarkGray
+                '#D3D3D3',      // LightGray
+                '#F5F5F5',      // WhiteSmoke
+                '#FFFFFF'       // White
+            ];
+
+
+            if (earningsChartInstance) {
+                earningsChartInstance.destroy(); // Destroy previous instance
+            }
+
+            const ctx = earningsChartCanvas.getContext('2d');
+            earningsChartInstance = new Chart(ctx, {
+                type: 'pie', // Changed to pie chart
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Earnings Distribution',
+                        data: amounts,
+                        backgroundColor: pieChartColors.slice(0, amounts.length), // Use enough colors
+                        borderColor: '#222222', // Card background color for slice borders
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right', // Position legend to the right
+                            labels: {
+                                color: '#e0e0e0', // Light text for legend
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Percentage of Total Earnings by Period', // Updated title
+                            color: '#e0e0e0', // Light text for title
+                            font: {
+                                size: 18
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const currentValue = context.raw;
+                                    const percentage = ((currentValue / totalEarnings) * 100).toFixed(2);
+                                    return `${label}: $${currentValue.toFixed(2)} (${percentage}%)`;
+                                }
+                            },
+                            backgroundColor: '#333333', // Dark tooltip background
+                            titleColor: '#FFD700', // Gold title in tooltip
+                            bodyColor: '#e0e0e0', // Light text in tooltip
+                            borderColor: '#FFD700',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // Handle form submission for clients
+        clientForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const companyName = document.getElementById('companyName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const website = document.getElementById('website').value.trim();
+            const status = document.getElementById('status').value;
+            const clientType = document.getElementById('clientType').value;
+            const priceSalary = document.getElementById('priceSalary').value.trim();
+
+            if (!fullName || !companyName || !email || !priceSalary) {
+                showMessage("Please fill in all required fields.", true);
+                return;
+            }
+
+            const clientData = {
+                fullName,
+                companyName,
+                email,
+                phoneNumber: phoneNumber || 'N/A',
+                website: website || 'N/A',
+                status,
+                clientType,
+                priceSalary,
+                createdAt: serverTimestamp() // Use server timestamp for consistent ordering
+            };
+
+            addClient(clientData);
+        });
+
+        // Handle form submission for earnings
+        earningsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const startDate = new Date(earningStartDateInput.value);
+            const endDate = new Date(earningEndDateInput.value);
+            const amount = parseFloat(earningAmountInput.value);
+
+            if (isNaN(amount) || amount < 0) {
+                showMessage("Please enter a valid positive earning amount.", true);
+                return;
+            }
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                showMessage("Please select valid Start and End Dates.", true);
+                return;
+            }
+            if (startDate > endDate) {
+                showMessage("Start Date cannot be after End Date.", true);
+                return;
+            }
+
+
+            const earningData = {
+                startDate: startDate,
+                endDate: endDate,
+                amount,
+                createdAt: serverTimestamp() // Use server timestamp for consistent ordering
+            };
+
+            addMonthlyEarning(earningData);
+        });
+
+
+        // Custom Confirmation Modal (replaces window.confirm)
+        function showConfirmationModal(message) {
+            return new Promise(resolve => {
+                const modalId = 'confirmationModal';
+                let modal = document.getElementById(modalId);
+
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = modalId;
+                    modal.classList.add('fixed', 'inset-0', 'bg-gray-900', 'bg-opacity-80', 'flex', 'items-center', 'justify-center', 'z-50', 'hidden');
+                    modal.innerHTML = `
+                        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl max-w-sm w-full text-center border border-gold-400">
+                            <p class="text-xl font-semibold text-white mb-8">${message}</p>
+                            <div class="flex justify-center space-x-6">
+                                <button id="confirmBtn" class="btn-primary">Yes, Delete</button>
+                                <button id="cancelBtn" class="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors shadow-md">Cancel</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                } else {
+                    modal.querySelector('p').textContent = message;
+                }
+
+                modal.classList.remove('hidden');
+
+                const confirmBtn = modal.querySelector('#confirmBtn');
+                const cancelBtn = modal.querySelector('#cancelBtn');
+
+                const cleanup = () => {
+                    modal.classList.add('hidden');
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    cancelBtn.removeEventListener('click', onCancel);
+                };
+
+                const onConfirm = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                const onCancel = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                confirmBtn.addEventListener('click', onConfirm);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+
+        // Initialize Firebase on window load
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>
